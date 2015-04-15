@@ -1,0 +1,21 @@
+{
+  "env": {
+    "node": true,
+    "mocha": true
+  },
+  "globals": {
+    "pathToSrc": true,
+    "sinon": true,
+    "Backbone": true,
+    "should": true
+  },
+  "rules": {
+    "strict": "global",
+    "space-before-function-parenthese": "always",
+    "no-unused-vars": false,
+    "quotes": "single",
+    "brace-style": "stroustrup",
+    "no-unused-expressions": true,
+    "no-underscore-dangle": false
+  }
+}
