@@ -3,7 +3,8 @@ var Collection = Backbone.Collection;
 
 var CustomerModel = Model.extend({
     schema: {
-        address: Model
+        address: Model,
+        emails: Collection.extend({ model: Model })
     }
 });
 
