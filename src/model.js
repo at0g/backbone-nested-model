@@ -104,6 +104,9 @@ module.exports = Backbone.Model.extend({
             if (this.children.hasOwnProperty(instanceKey)) {
                 child = this.children[instanceKey];
                 context = child.at(itemIndex);
+                if (!context) {
+                    return;
+                }
                 attr = attr.substring(closeBracket + 1);
                 if (dotIndex === -1) {
                    return context.toJSON();
@@ -173,8 +176,16 @@ module.exports = Backbone.Model.extend({
                 }
 
                 if (this.children.hasOwnProperty(prop)) {
-                    this.children[prop].set( _.clone(attrs[prop]), options);
-                    attrs[prop] = this.children[prop].toJSON();
+                    var child = this.children[prop];
+                    var values = _.clone(attrs[prop]);
+                    if (child instanceof Backbone.Collection) {
+                        child.reset(values);
+                    }
+                    else {
+                        child.set(values, options);
+                    }
+
+                    attrs[prop] = child.toJSON();
                 }
             }
         }

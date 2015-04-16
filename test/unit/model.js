@@ -32,6 +32,7 @@ describe('Model', function () {
             var model = new Model({});
             Model.prototype.parse.should.be.a.Function;
             spy.should.be.called;
+            spy.reset();
         });
 
         it('does not create children if no data or defaults are given', function () {
@@ -86,24 +87,6 @@ describe('Model', function () {
             model.children.test.should.exist;
             model.children.test.should.be.an.instanceof(Backbone.Model);
             model.children.test.get('message').should.equal('hello');
-        });
-
-        describe('get()', function () {
-            it('returns the child attribute', function () {
-                model.get('test').should.have.keys({ message: 'testing'});
-                model.get('foo').should.equal('bar');
-            });
-
-            it('returns objects in nested arrays using object access operator', function () {
-                model.schema.myCollection = Backbone.Collection;
-                model.set({
-                    myCollection: [
-                        {name: 'model0'},
-                        {name: 'model1'}
-                    ]
-                });
-                model.get('myCollection[0]').should.exist;
-            });
         });
 
         describe('toJSON()', function () {
