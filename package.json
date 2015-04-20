@@ -4,6 +4,7 @@
   "description": "Configure Backbone.Model with heirarchial data",
   "main": "lib/model.js",
   "scripts": {
+    "build": "webpack -p",
     "test": "mocha",
     "coverage": "istanbul cover _mocha -- -R spec"
   },

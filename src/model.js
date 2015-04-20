@@ -5,12 +5,7 @@ var Backbone = require('backbone');
 var helpers = require('./helpers');
 
 /**
- * Creates a non-flat model, allowing properties to be
- * cast via an object passed to this.schema.
- * For casting to be applied correctly, remember to set
- * { parse: true } when creating the model instance.
- *
- * Eg. var myModel = new Model(attrs, { parse: true});
+ * Creates a hierarchical model, allowing properties to be cast via an object passed to this.schema.
  *
  */
 module.exports = Backbone.Model.extend({
@@ -58,17 +53,18 @@ module.exports = Backbone.Model.extend({
             instance = new EmbeddedClass(data);
 
             // Listen for all events on the embedded models
-            instance.on('all', function (name, d) {
+            instance.on('all', function (name) {
                 var args = _.rest(Array.prototype.slice.call(arguments, 0), 1);
+                var newArgs = [].concat([helpers.modifyEvent(name, key)], args);
+                this.trigger.apply(this, newArgs);
 
-                this.trigger(helpers.modifyEvent(name, key), args);
-
-                // If the child is destroyed, don't send a 'destroy' event from this.
+                // If the child is destroyed, don't send a 'destroy' event from this model.
                 if( name === 'destroy'){
                     return;
                 }
+                // if the event is namespaced from a child, trigger the event from this model too
                 else if( name.indexOf(':') === -1) {
-                    this.trigger(name, args);
+                    this.trigger.apply(this, [].concat([name], args));
                 }
             }, this);
 
@@ -90,43 +86,11 @@ module.exports = Backbone.Model.extend({
     },
 
     get: function (attr) {
-        var dotIndex, openBracket, closeBracket, itemIndex, instanceKey, child, context;
-
-        dotIndex = attr.indexOf('.');
-        openBracket = attr.indexOf('[');
-
-        // If the bracket comes first
-        if(openBracket !== -1 && (openBracket < dotIndex || dotIndex === -1)) {
-            closeBracket = attr.indexOf(']', openBracket);
-            itemIndex = attr.substring(openBracket + 1, closeBracket);
-            instanceKey = attr.substring(0, openBracket);
-
-            if (this.children.hasOwnProperty(instanceKey)) {
-                child = this.children[instanceKey];
-                context = child.at(itemIndex);
-                if (!context) {
-                    return;
-                }
-                attr = attr.substring(closeBracket + 1);
-                if (dotIndex === -1) {
-                   return context.toJSON();
-                } else {
-                    return context.get(attr.substring(attr.indexOf('.') + 1));
-                }
-            }
-        }
-        // if the dot comes first
-        else if (dotIndex !== -1 && (dotIndex < openBracket || openBracket === -1) ) {
-            context = this.children[attr.substring(0, dotIndex)];
-            attr = attr.substring(dotIndex + 1);
-            return context.get(attr);
-        }
-
-        return this.attributes[attr];
+        return helpers.getChildAttribute(attr, this.children) || this.attributes[attr];
     },
 
     set: function (key, val, options) {
-        var attr, attrs, unset, changes, silent, changing, prev, current;
+        var attrs, keys, child, context, attributes, prop;
         if (key === null) {
             return this;
         }
@@ -145,28 +109,23 @@ module.exports = Backbone.Model.extend({
             return false;
         }
 
-        for (var prop in attrs) {
+        for (prop in attrs) {
+            keys = helpers.getChildKey(prop);
+            child = helpers.getChild(keys.key, this.children);
+            context = child;
+            attributes = attrs[prop];
 
-            // Allow dot access to set nested properties
-            if (prop.indexOf('.') > -1 && !this.attributes.hasOwnProperty(prop)) {
-                var i = prop.indexOf('.');
-                var instanceKey = prop.substring(0, i);
-                var instanceProp = prop.substring(i + 1);
-                var child;
-                if (instanceKey.indexOf('[') > -1) {
-                    var openBracket = instanceKey.indexOf('[');
-                    var closeBracket = instanceKey.indexOf(']', openBracket);
-                    var itemIndex = instanceKey.substring(openBracket + 1, closeBracket);
-                    instanceKey = instanceKey.substring(0, openBracket);
-                    child = this.children[instanceKey].at(itemIndex);
-                }
-                else {
-                    child = this.children[instanceKey];
-                }
+            // Check if the attribute
+            if( prop.indexOf('.') !== -1 || prop.indexOf('[') !== -1){
 
-                child.set(instanceProp, _.clone(attrs[prop]), options);
-                attrs[instanceKey] = this.children[instanceKey].toJSON();
+                context = helpers.getChildContext(child, keys.relativeKey, attributes);
+                context.child.set(context.values, options);
+
+                // Delete the key to prevent attribute keys like "myColl[0]"
                 delete attrs[prop];
+
+                // update the nested attributes value
+                attrs[keys.key] = child.toJSON();
             }
             else {
                 // If the instance does not exist for the key, create it.
@@ -175,10 +134,12 @@ module.exports = Backbone.Model.extend({
                     this.children[prop] = new InstanceFactory();
                 }
 
+                // If the property exists in the children array, treat it as a model or collection respectively
                 if (this.children.hasOwnProperty(prop)) {
-                    var child = this.children[prop];
+                    child = this.children[prop];
                     var values = _.clone(attrs[prop]);
                     if (child instanceof Backbone.Collection) {
+                        // If the attribute is a collection, reset it to the new values
                         child.reset(values);
                     }
                     else {
@@ -196,7 +157,6 @@ module.exports = Backbone.Model.extend({
     toJSON: function () {
         var res, key;
 
-        // Call super.toJSON
         res = Backbone.Model.prototype.toJSON.apply(this, arguments);
 
         // Iterate through the models children, calling toJSON on each cast instance.

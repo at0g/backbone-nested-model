@@ -1,6 +1,7 @@
+.eslintrc
+.gitignore
 coverage
 node_modules
 src
 test
-.eslintrc
 webpack.config.js

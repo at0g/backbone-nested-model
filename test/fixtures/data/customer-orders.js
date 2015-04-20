@@ -1,6 +1,8 @@
 "use strict";
 
 module.exports = {
+
+    type: 'customer orders',
     customer: {
         id: '12345',
         name: 'Will E. Coyote',

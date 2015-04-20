@@ -29,10 +29,15 @@ describe('tree', function () {
 	it('sets the children array', function () {
 		var expected = [{ label: 'hello' }];
 		tree.set('children', expected);
-		//tree.attributes.children.should.deep.equal(expected);
+		tree.attributes.children.should.deep.equal(expected);
 	});
 
-	it('uses object access [] to set individual children', function () {
+	it('uses array access [] with an object literal to set children in collection', function () {
+		tree.set('children[1]', { label: 'photos' });
+		tree.attributes.children[1].label.should.equal('photos');
+	});
+
+	it('uses array access [] and dot syntax to set individual properties of collection children', function () {
 		tree.set('children[1].label', 'photos');
 		tree.attributes.children[1].label.should.equal('photos');
 	});
