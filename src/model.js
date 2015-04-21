@@ -70,6 +70,7 @@ module.exports = Backbone.Model.extend({
 
             instance.on('change', function(d) {
                 this.attributes[key] = _.clone(d.attributes);
+                this.changed[key] = d.changed;
             }, this);
 
             instance.on('destroy', function(d) {
@@ -105,9 +106,7 @@ module.exports = Backbone.Model.extend({
 
         options || (options = {});
 
-        if (!this._validate(attrs, options)) {
-            return false;
-        }
+        var changes = {};
 
         for (prop in attrs) {
             keys = helpers.getChildKey(prop);
@@ -115,9 +114,8 @@ module.exports = Backbone.Model.extend({
             context = child;
             attributes = attrs[prop];
 
-            // Check if the attribute
+            // Check if the attribute has a dot or square bracket
             if( prop.indexOf('.') !== -1 || prop.indexOf('[') !== -1){
-
                 context = helpers.getChildContext(child, keys.relativeKey, attributes);
                 context.child.set(context.values, options);
 
@@ -126,6 +124,13 @@ module.exports = Backbone.Model.extend({
 
                 // update the nested attributes value
                 attrs[keys.key] = child.toJSON();
+                if(context.child.collection) {
+                    changes[keys.key] = [context.child.changed];
+                } else {
+                    changes[keys.key] = context.child.changed;
+                }
+
+                options.unset = false;
             }
             else {
                 // If the instance does not exist for the key, create it.
@@ -141,9 +146,19 @@ module.exports = Backbone.Model.extend({
                     if (child instanceof Backbone.Collection) {
                         // If the attribute is a collection, reset it to the new values
                         child.reset(values);
+                        changes[prop] = _.clone(values);
                     }
                     else {
                         child.set(values, options);
+                        changes[prop] = child.changed;
+                    }
+
+
+                    if (values !== null || typeof values === 'undefined') {
+                        options.unset = false;
+                    }
+                    else if (options.unset === true) {
+                        delete this.children[prop];
                     }
 
                     attrs[prop] = child.toJSON();
@@ -151,7 +166,11 @@ module.exports = Backbone.Model.extend({
             }
         }
 
-        return Backbone.Model.prototype.set.apply(this, [attrs, options]);
+        var result = Backbone.Model.prototype.set.apply(this, [attrs, options]);
+
+        this.changed = _.extend({}, this.changed, changes);
+
+        return result;
     },
 
     toJSON: function () {

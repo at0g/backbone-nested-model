@@ -57,6 +57,7 @@ describe('getters', function () {
         should.not.exist(model.get('foo'));
         should.not.exist(model.get('orders[3]'));
         should.not.exist(model.get('orders[3].id'));
+        should.not.exist(model.get('foo[0]'));
     });
 
 });

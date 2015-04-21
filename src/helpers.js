@@ -68,6 +68,9 @@ exports.getChildAttribute = function (attr, children) {
                 return context.get(attr.substring(attr.indexOf('.') + 1));
             }
         }
+        else {
+            return;
+        }
     }
 };
 
