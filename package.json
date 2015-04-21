@@ -1,0 +1,41 @@
+{
+  "name": "backbone-nested-model",
+  "version": "1.0.0-prerelease",
+  "description": "Configure Backbone.Model with heirarchial data",
+  "main": "lib/model.js",
+  "scripts": {
+    "build": "webpack -p",
+    "test": "mocha",
+    "coverage": "istanbul cover _mocha -- -R spec"
+  },
+  "author": "Ben Daley <ben@fanboy.io>",
+  "license": "MIT",
+  "devDependencies": {
+    "backbone": "^1.1.2",
+    "chai": "^2.2.0",
+    "require-new": "^1.0.2",
+    "sinon": "^1.14.1",
+    "sinon-chai": "^2.7.0",
+    "underscore": "^1.8.2",
+    "webpack": "^1.7.3"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:at0g/backbone-nested-model.git"
+  },
+  "keywords": [
+    "backbone",
+    "model",
+    "collection",
+    "nested",
+    "hierarchial"
+  ],
+  "bugs": {
+    "url": "https://github.com/at0g/backbone-nested-model/issues"
+  },
+  "homepage": "https://github.com/at0g/backbone-nested-model"
+}
