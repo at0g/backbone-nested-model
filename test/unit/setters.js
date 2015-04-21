@@ -97,6 +97,18 @@ describe('setters', function () {
             should.not.exist(model.attributes.customer.name);
         });
 
+        it('creates a child model if it does not exist', function () {
+            var otherData = _.extend({}, data);
+            delete otherData.customer;
+            model = new CustomerOrders(otherData);
+            should.not.exist(model.get('customer'));
+            should.not.exist(model.children.customer);
+            model.set({customer: data.customer});
+            model.children.customer.should.exist;
+            model.get('customer').should.deep.equal(data.customer);
+            model.children.customer.should.be.an.instanceOf(CustomerOrders.prototype.schema.customer);
+        });
+
     });
 
     describe('child collection', function () {
