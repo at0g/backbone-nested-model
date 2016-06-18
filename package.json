@@ -1,6 +1,6 @@
 {
   "name": "backbone-nested-model",
-  "version": "1.0.0-prerelease",
+  "version": "1.0.0",
   "description": "Configure Backbone.Model with heirarchial data",
   "main": "lib/model.js",
   "scripts": {
